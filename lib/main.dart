@@ -1,8 +1,15 @@
 import 'package:flutter/material.dart';
+import 'Model/database_helper.dart';
+import 'Model/user.dart';
+import 'Model/user_repository.dart';
+import 'View/home_screen.dart';
 
-import 'User.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  // Initialize the database
+  await DatabaseHelper().database; // Ensure the database is initialized.
+
   runApp(const MyApp());
 }
 
@@ -36,9 +43,15 @@ class _LoginPageState extends State<LoginPage> {
   final _usernameController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _isPasswordVisible = false;
-
   String? _loginMessage;
   Color _messageColor = Colors.red;
+  final UserRepository _userRepository = UserRepository();
+
+  @override
+  void initState() {
+    super.initState();
+  }
+
 
   @override
   void dispose() {
@@ -47,25 +60,37 @@ class _LoginPageState extends State<LoginPage> {
     super.dispose();
   }
 
-  void _login() {
+  Future<void> _login() async {
     if (_formKey.currentState!.validate()) {
-      // Simulate a login process.  Replace this with your actual authentication logic.
       String username = _usernameController.text;
       String password = _passwordController.text;
+
       try {
-        User user = User(username, password);
+        User? user = await _userRepository.validateUser(username, password);
 
-        setState(() {
-          _loginMessage = 'Login Successful!';
-          _messageColor = Colors.green;
-        });
+        if(!mounted) return;
+        if (user != null) {
+          setState(() {
+            _loginMessage = 'Login Successful!';
+            _messageColor = Colors.green;
+          });
+          _formKey.currentState?.reset();
+          _usernameController.clear();
+          _passwordController.clear();
 
-        _formKey.currentState?.reset();
-        _usernameController.clear();
-        _passwordController.clear();
+           Navigator.pushReplacement(
+             context,
+             MaterialPageRoute(builder: (context) => HomeScreen(title: 'Dashboard')),
+           );
+        } else {
+          setState(() {
+            _loginMessage = 'Invalid username or password.';
+            _messageColor = Colors.red;
+          });
+        }
       } catch (e) {
         setState(() {
-          _loginMessage = e.toString().replaceFirst('Exception:', '');
+          _loginMessage = 'An error occurred: $e';
           _messageColor = Colors.red;
         });
       }
@@ -93,7 +118,6 @@ class _LoginPageState extends State<LoginPage> {
                     textAlign: TextAlign.center,
                   ),
                 ),
-              // Username Input
               TextFormField(
                 controller: _usernameController,
                 keyboardType: TextInputType.text,
@@ -115,7 +139,6 @@ class _LoginPageState extends State<LoginPage> {
                 },
               ),
               const SizedBox(height: 20.0),
-              // Password Input
               TextFormField(
                 controller: _passwordController,
                 obscureText: !_isPasswordVisible,
@@ -148,7 +171,6 @@ class _LoginPageState extends State<LoginPage> {
                 },
               ),
               const SizedBox(height: 30.0),
-              // Login Button
               ElevatedButton(
                 onPressed: _login,
                 style: ElevatedButton.styleFrom(
