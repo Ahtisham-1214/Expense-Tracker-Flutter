@@ -1,12 +1,27 @@
 // lib/user.dart
 class User {
   int? id; // Nullable for when it's not yet in the DB (auto-incremented)
-  String _userName;
-  String _password;
+  late String _userName;
+  late String _password;
+  late String _role;
 
-  User({this.id, required String userName, required String password})
-      : _userName = userName,
-        _password = password;
+  User({this.id, required String userName, required String password, required String role})
+  {
+    this.userName = userName;
+    this.password = password;
+    this.role = role;
+  }
+
+
+  String get role => _role;
+
+  set role(String value) {
+    if (value.trim().isEmpty) {
+      _role = "Driver"; // Basic validation for object creation
+    }else {
+      _role = value;
+    }
+  }
 
   String get password => _password;
   set password(String password) {
@@ -15,6 +30,7 @@ class User {
     }
     _password = password;
   }
+
   String get userName => _userName;
   set userName(String userName) {
     if (userName.trim().isEmpty) {
@@ -29,6 +45,7 @@ class User {
       'id': id,
       'username': _userName,
       'password': _password,
+      'role': _role,
     };
   }
 
@@ -38,12 +55,13 @@ class User {
       id: map['id'],
       userName: map['username'],
       password: map['password'],
+      role: map['role'],
     );
   }
 
   // For debugging
   @override
   String toString() {
-    return 'User(id: $id, username: $_userName, password: $_password)';
+    return 'User(id: $id, username: $_userName, password: $_password, role: $role)';
   }
 }
