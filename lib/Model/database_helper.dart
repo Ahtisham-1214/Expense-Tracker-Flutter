@@ -48,7 +48,7 @@ class DatabaseHelper {
     ''');
     // Optional: Insert some initial users if you want to pre-populate for testing
     // await db.insert('users', {'username': 'testuser', 'password': 'password123'});
-    await db.insert('users', {'username': 'ahtisham', 'password': '123'});
+    await db.insert('users', {'username': 'ahtisham', 'password': '123', 'role': 'admin'});
   }
 
   // Handle database upgrades (e.g., adding new columns)
