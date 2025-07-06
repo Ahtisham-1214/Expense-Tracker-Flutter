@@ -1,15 +1,12 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'Model/database_helper.dart';
-import 'Model/user.dart';
-import 'Model/user_repository.dart';
-import 'View/home_screen.dart';
-
+import 'View/login_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  // Initialize the database
-  await DatabaseHelper().database; // Ensure the database is initialized.
-
+  await DatabaseHelper().database;
   runApp(const MyApp());
 }
 
@@ -26,163 +23,121 @@ class MyApp extends StatelessWidget {
         fontFamily: 'Inter',
       ),
       debugShowCheckedModeBanner: false,
-      home: const LoginPage(),
+      home: const SplashScreen(),
     );
   }
 }
 
-class LoginPage extends StatefulWidget {
-  const LoginPage({super.key});
+class SplashScreen extends StatefulWidget {
+  const SplashScreen({super.key});
 
   @override
-  _LoginPageState createState() => _LoginPageState();
+  _SplashScreenState createState() => _SplashScreenState();
 }
 
-class _LoginPageState extends State<LoginPage> {
-  final _formKey = GlobalKey<FormState>();
-  final _usernameController = TextEditingController();
-  final _passwordController = TextEditingController();
-  bool _isPasswordVisible = false;
-  String? _loginMessage;
-  Color _messageColor = Colors.red;
-  final UserRepository _userRepository = UserRepository();
+class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _rotationAnimation;
+  final double _radius = 120;
 
   @override
   void initState() {
     super.initState();
-  }
 
+    _controller = AnimationController(
+      duration: const Duration(seconds: 10),
+      vsync: this,
+    );
+
+    _rotationAnimation = Tween<double>(begin: 0, end: 2 * pi).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.linear),
+    );
+
+    _controller.repeat();
+
+    Future.delayed(const Duration(seconds: 10), () {
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (context) => const LoginPage()),
+      );
+    });
+  }
 
   @override
   void dispose() {
-    _usernameController.dispose();
-    _passwordController.dispose();
+    _controller.dispose();
     super.dispose();
   }
 
-  Future<void> _login() async {
-    if (_formKey.currentState!.validate()) {
-      String username = _usernameController.text;
-      String password = _passwordController.text;
+  Widget _buildCurvedText(String text, double angle) {
+    // Split text into characters to position them individually
+    final characters = text.split('');
+    final characterCount = characters.length;
+    final double charAngle = pi / (characterCount / 2);
 
-      try {
-        User? user = await _userRepository.validateUser(username, password);
-
-        if(!mounted) return;
-        if (user != null) {
-          setState(() {
-            _loginMessage = 'Login Successful!';
-            _messageColor = Colors.green;
-          });
-          _formKey.currentState?.reset();
-          _usernameController.clear();
-          _passwordController.clear();
-
-           Navigator.pushReplacement(
-             context,
-             MaterialPageRoute(builder: (context) => HomeScreen(title: 'Dashboard', user: user)),
-           );
-        } else {
-          setState(() {
-            _loginMessage = 'Invalid username or password.';
-            _messageColor = Colors.red;
-          });
-        }
-      } catch (e) {
-        setState(() {
-          _loginMessage = 'An error occurred: $e';
-          _messageColor = Colors.red;
-        });
-      }
-    }
+    return Transform.rotate(
+      angle: angle,
+      child: SizedBox(
+        width: _radius * 2,
+        height: _radius * 2,
+        child: Stack(
+          alignment: Alignment.center,
+          children: List.generate(characterCount, (index) {
+            final charAngle = -pi/2 + (pi / characterCount) * index;
+            return Positioned(
+              left: _radius + _radius * cos(charAngle) - 6,
+              top: _radius + _radius * sin(charAngle) - 8,
+              child: Transform.rotate(
+                angle: charAngle + pi/2,
+                child: Text(
+                  characters[index],
+                  style: const TextStyle(
+                    fontSize: 14,
+                    color: Colors.blue,
+                  ),
+                ),
+              ),
+            );
+          }),
+        ),
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Login'), centerTitle: true),
-      body: Padding(
-        padding: const EdgeInsets.all(20.0),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: <Widget>[
-              if (_loginMessage != null)
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 10.0),
-                  child: Text(
-                    _loginMessage!,
-                    style: TextStyle(color: _messageColor, fontSize: 16),
-                    textAlign: TextAlign.center,
+      backgroundColor: Colors.white,
+      body: Center(
+        child: AnimatedBuilder(
+          animation: _rotationAnimation,
+          builder: (context, child) {
+            return Stack(
+              alignment: Alignment.center,
+              children: [
+                // Central AUCS text
+                const Text(
+                  'AUCS',
+                  style: TextStyle(
+                    fontSize: 60,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.blue,
                   ),
                 ),
-              TextFormField(
-                controller: _usernameController,
-                keyboardType: TextInputType.text,
-                decoration: InputDecoration(
-                  labelText: 'Username',
-                  prefixIcon: const Icon(Icons.person_outline),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10.0),
-                  ),
-                  floatingLabelBehavior: FloatingLabelBehavior.auto,
-                ),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Please enter your username';
-                  } else if (value.length < 3) {
-                    return 'Username must be at least 3 characters long';
-                  }
-                  return null;
-                },
-              ),
-              const SizedBox(height: 20.0),
-              TextFormField(
-                controller: _passwordController,
-                obscureText: !_isPasswordVisible,
-                keyboardType: TextInputType.text,
-                decoration: InputDecoration(
-                  labelText: 'Password',
-                  prefixIcon: const Icon(Icons.lock_outline),
-                  suffixIcon: IconButton(
-                    icon: Icon(
-                      _isPasswordVisible
-                          ? Icons.visibility
-                          : Icons.visibility_off,
+
+                // Curved text
+                Transform.translate(
+                  offset: Offset.zero,
+                  child: Transform.rotate(
+                    angle: _rotationAnimation.value,
+                    child: _buildCurvedText(
+                      'Aror University Computer Society ',
+                      0,
                     ),
-                    onPressed: () {
-                      setState(() {
-                        _isPasswordVisible = !_isPasswordVisible;
-                      });
-                    },
-                  ),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10.0),
-                  ),
-                  floatingLabelBehavior: FloatingLabelBehavior.auto,
-                ),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Please enter your password';
-                  }
-                  return null;
-                },
-              ),
-              const SizedBox(height: 30.0),
-              ElevatedButton(
-                onPressed: _login,
-                style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 12.0),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10.0),
                   ),
                 ),
-                child: const Text('Login', style: TextStyle(fontSize: 18.0)),
-              ),
-            ],
-          ),
+              ],
+            );
+          },
         ),
       ),
     );
