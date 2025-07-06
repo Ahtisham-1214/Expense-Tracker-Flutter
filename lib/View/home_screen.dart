@@ -47,7 +47,7 @@ class _HomeScreen extends State<HomeScreen> {
               leading: const Icon(Icons.person_add),
               title: const Text('Register'),
               onTap: () {
-                if (widget.user.role == "Admin") {
+                if (widget.user.role == "admin") {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
