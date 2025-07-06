@@ -17,7 +17,7 @@ class User {
 
   set role(String value) {
     if (value.trim().isEmpty) {
-      _role = "Driver"; // Basic validation for object creation
+      _role = "user"; // Basic validation for object creation
     }else {
       _role = value;
     }
