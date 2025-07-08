@@ -1,9 +1,10 @@
 import 'package:expense_tracker/View/participant_screen.dart';
 import 'package:expense_tracker/View/volunteer_screen.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../Model/user.dart';
-import '../main.dart';
 import 'register_screen.dart';
 import 'login_screen.dart';
 
@@ -22,6 +23,23 @@ class _HomeScreen extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+  }
+
+  Future<void> _logout() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove('user_role');
+    await FirebaseAuth.instance.signOut();
+    if (!mounted) return;
+    Navigator.pushAndRemoveUntil(
+      context,
+      MaterialPageRoute(builder: (context) => const LoginScreen()),
+          (route) => false, // Remove all previous routes
+    );
   }
 
   @override
@@ -80,10 +98,7 @@ class _HomeScreen extends State<HomeScreen> {
               leading: const Icon(Icons.logout),
               title: const Text('Logout'),
               onTap: () {
-                Navigator.pushReplacement(
-                  context,
-                  MaterialPageRoute(builder: (context) => LoginScreen()),
-                );
+                _logout();
               },
             ),
           ],
