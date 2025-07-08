@@ -1,23 +1,27 @@
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 
 import '../Model/user.dart';
 import '../Model/user_repository.dart';
 import 'home_screen.dart';
-class LoginPage extends StatefulWidget {
-  const LoginPage({super.key});
+class LoginScreen extends StatefulWidget {
+  const LoginScreen({super.key});
 
   @override
-  _LoginPageState createState() => _LoginPageState();
+  _LoginScreenState createState() => _LoginScreenState();
 }
 
-class _LoginPageState extends State<LoginPage> {
+class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _usernameController = TextEditingController();
+  final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _isPasswordVisible = false;
   String? _loginMessage;
   Color _messageColor = Colors.red;
-  final UserRepository _userRepository = UserRepository();
+  // final UserRepository _userRepository = UserRepository();
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+  final userDatabase = FirebaseDatabase.instance.ref('users');
 
   @override
   void initState() {
@@ -27,42 +31,81 @@ class _LoginPageState extends State<LoginPage> {
 
   @override
   void dispose() {
-    _usernameController.dispose();
+    _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
   }
 
   Future<void> _login() async {
     if (_formKey.currentState!.validate()) {
-      String username = _usernameController.text;
+      String email = _emailController.text;
       String password = _passwordController.text;
 
       try {
-        User? user = await _userRepository.validateUser(username, password);
+        // Using async/await for cleaner error handling
+        UserCredential userCredential = await _auth.signInWithEmailAndPassword(
+          email: email,
+          password: password,
+        );
 
-        if(!mounted) return;
-        if (user != null) {
+        DatabaseEvent snapshot = await userDatabase.child(userCredential.user!.uid).once();
+
+        // Login Successful
+        if (!mounted) return; // Check mounted before using context or setState
+
+        if(snapshot.snapshot.exists && snapshot.snapshot.value != null){
+          Map<dynamic, dynamic> userData = snapshot.snapshot.value as Map<dynamic, dynamic>;
+          String role = userData['role'];
           setState(() {
             _loginMessage = 'Login Successful!';
             _messageColor = Colors.green;
           });
+
           _formKey.currentState?.reset();
-          _usernameController.clear();
+          _emailController.clear();
           _passwordController.clear();
 
           Navigator.pushReplacement(
             context,
-            MaterialPageRoute(builder: (context) => HomeScreen(title: 'Dashboard', user: user)),
+            MaterialPageRoute(builder: (context) => HomeScreen(title: 'Dashboard', role: role)),
           );
-        } else {
-          setState(() {
-            _loginMessage = 'Invalid username or password.';
-            _messageColor = Colors.red;
-          });
         }
-      } catch (e) {
+
+
+      } on FirebaseAuthException catch (e) {
+        if (!mounted) return; // Check mounted before using context or setState
+
+        String errorMessage;
+        switch (e.code) {
+          case 'user-not-found':
+            errorMessage = 'No user found for that email.';
+            break;
+          case 'invalid-email':
+            errorMessage = 'The email address is not valid';
+            break;
+          case 'user-disabled':
+            errorMessage = 'This user account has been disabled';
+            break;
+          case 'invalid-credential': // This is a common one for wrong email/password
+            errorMessage = 'Invalid credentials';
+            break;
+        // Add more cases as needed based on Firebase Auth error codes
+        // See: https://firebase.google.com/docs/auth/admin/errors
+          default:
+            errorMessage = 'An unexpected error occurred. Please try again.';
+        // You might want to log the original error for debugging:
+        // print('Firebase Auth Error: ${e.code} - ${e.message}');
+        }
         setState(() {
-          _loginMessage = 'An error occurred: $e';
+          _loginMessage = errorMessage;
+          _messageColor = Colors.red;
+        });
+      } catch (e) {
+        // Catch any other non-FirebaseAuth errors
+        if (!mounted) return;
+
+        setState(() {
+          _loginMessage = 'An error occurred: ${e.toString()}';
           _messageColor = Colors.red;
         });
       }
@@ -91,10 +134,10 @@ class _LoginPageState extends State<LoginPage> {
                   ),
                 ),
               TextFormField(
-                controller: _usernameController,
+                controller: _emailController,
                 keyboardType: TextInputType.text,
                 decoration: InputDecoration(
-                  labelText: 'Username',
+                  labelText: 'Email',
                   prefixIcon: const Icon(Icons.person_outline),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(10.0),
