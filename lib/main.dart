@@ -1,17 +1,21 @@
 import 'dart:math';
 
+import 'package:expense_tracker/View/splash_router.dart';
+import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 import 'Model/database_helper.dart';
 import 'View/login_screen.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
-  await DatabaseHelper().database;
+  // await DatabaseHelper().database;
+  FirebaseDatabase.instance.setPersistenceEnabled(true);
   runApp(const MyApp());
 }
 
@@ -28,7 +32,7 @@ class MyApp extends StatelessWidget {
         fontFamily: 'Inter',
       ),
       debugShowCheckedModeBanner: false,
-      home: const SplashScreen(),
+      home: const SplashRouter(),
     );
   }
 }
@@ -50,7 +54,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
     super.initState();
 
     _controller = AnimationController(
-      duration: const Duration(seconds: 10),
+      duration: const Duration(seconds: 5),
       vsync: this,
     );
 
@@ -60,9 +64,9 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
 
     _controller.repeat();
 
-    Future.delayed(const Duration(seconds: 10), () {
+    Future.delayed(const Duration(seconds: 3), () {
       Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (context) => const LoginPage()),
+        MaterialPageRoute(builder: (context) => const LoginScreen()),
       );
     });
   }
