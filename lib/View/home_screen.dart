@@ -8,10 +8,10 @@ import 'register_screen.dart';
 import 'login_screen.dart';
 
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key, required this.title});
+  const HomeScreen({super.key, required this.title, required this.role});
 
   final String title;
-  // final User user;
+  final String role;
 
   @override
   State<HomeScreen> createState() => _HomeScreen();
@@ -48,31 +48,31 @@ class _HomeScreen extends State<HomeScreen> {
               leading: const Icon(Icons.person_add),
               title: const Text('Register'),
               onTap: () {
-                // if (widget.user.role == "admin") {
+                if (widget.role == "admin") {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
                       builder: (context) => const RegisterPage(),
                     ),
                   );
-                // } else {
-                //   showDialog(
-                //     context: context,
-                //     builder:
-                //         (context) => AlertDialog(
-                //       title: const Text('Permission Denied'),
-                //       content: const Text(
-                //         'Only admins can access this feature',
-                //       ),
-                //       actions: [
-                //         TextButton(
-                //           onPressed: () => Navigator.pop(context),
-                //           child: const Text('OK'),
-                //         ),
-                //       ],
-                //     ),
-                //   );
-                // }
+                } else {
+                  showDialog(
+                    context: context,
+                    builder:
+                        (context) => AlertDialog(
+                      title: const Text('Permission Denied'),
+                      content: const Text(
+                        'Only admins can access this feature',
+                      ),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.pop(context),
+                          child: const Text('OK'),
+                        ),
+                      ],
+                    ),
+                  );
+                }
               },
             ),
 
