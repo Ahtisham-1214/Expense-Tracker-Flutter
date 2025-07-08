@@ -1,6 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../Model/user.dart';
 import '../Model/user_repository.dart';
@@ -56,6 +57,9 @@ class _LoginScreenState extends State<LoginScreen> {
         if(snapshot.snapshot.exists && snapshot.snapshot.value != null){
           Map<dynamic, dynamic> userData = snapshot.snapshot.value as Map<dynamic, dynamic>;
           String role = userData['role'];
+          // Cache role for offline startup
+          final prefs = await SharedPreferences.getInstance();
+          await prefs.setString('user_role', role);
           setState(() {
             _loginMessage = 'Login Successful!';
             _messageColor = Colors.green;
