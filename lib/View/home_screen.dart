@@ -5,12 +5,13 @@ import 'package:flutter/material.dart';
 import '../Model/user.dart';
 import '../main.dart';
 import 'register_screen.dart';
+import 'login_screen.dart';
 
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key, required this.title, required this.user});
+  const HomeScreen({super.key, required this.title});
 
   final String title;
-  final User user;
+  // final User user;
 
   @override
   State<HomeScreen> createState() => _HomeScreen();
@@ -47,31 +48,31 @@ class _HomeScreen extends State<HomeScreen> {
               leading: const Icon(Icons.person_add),
               title: const Text('Register'),
               onTap: () {
-                if (widget.user.role == "admin") {
+                // if (widget.user.role == "admin") {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
                       builder: (context) => const RegisterPage(),
                     ),
                   );
-                } else {
-                  showDialog(
-                    context: context,
-                    builder:
-                        (context) => AlertDialog(
-                      title: const Text('Permission Denied'),
-                      content: const Text(
-                        'Only admins can access this feature',
-                      ),
-                      actions: [
-                        TextButton(
-                          onPressed: () => Navigator.pop(context),
-                          child: const Text('OK'),
-                        ),
-                      ],
-                    ),
-                  );
-                }
+                // } else {
+                //   showDialog(
+                //     context: context,
+                //     builder:
+                //         (context) => AlertDialog(
+                //       title: const Text('Permission Denied'),
+                //       content: const Text(
+                //         'Only admins can access this feature',
+                //       ),
+                //       actions: [
+                //         TextButton(
+                //           onPressed: () => Navigator.pop(context),
+                //           child: const Text('OK'),
+                //         ),
+                //       ],
+                //     ),
+                //   );
+                // }
               },
             ),
 
@@ -81,7 +82,7 @@ class _HomeScreen extends State<HomeScreen> {
               onTap: () {
                 Navigator.pushReplacement(
                   context,
-                  MaterialPageRoute(builder: (context) => MyApp()),
+                  MaterialPageRoute(builder: (context) => LoginScreen()),
                 );
               },
             ),
