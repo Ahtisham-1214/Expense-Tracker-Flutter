@@ -103,9 +103,9 @@ class _LoginPageState extends State<LoginPage> {
                 ),
                 validator: (value) {
                   if (value == null || value.isEmpty) {
-                    return 'Please enter your username';
-                  } else if (value.length < 3) {
-                    return 'Username must be at least 3 characters long';
+                    return 'Please enter your email';
+                  }else if (!RegExp(r"^[a-zA-Z0-9_!#$%&'*+/=?`{|}~^.-]+@[a-zA-Z0-9.-]+$").hasMatch(value)) {
+                    return 'Please enter a valid email';
                   }
                   return null;
                 },
