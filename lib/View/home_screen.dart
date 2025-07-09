@@ -63,6 +63,12 @@ class _HomeScreen extends State<HomeScreen> {
               ),
             ),
             ListTile(
+              leading: const Icon(Icons.person),
+              title: const Text('Profile'),
+              onTap: () {
+              },
+            ),
+            ListTile(
               leading: const Icon(Icons.person_add),
               title: const Text('Register'),
               onTap: () {
