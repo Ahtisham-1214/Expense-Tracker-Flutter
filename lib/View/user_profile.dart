@@ -1,6 +1,9 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+import 'login_screen.dart';
 
 class UserProfileScreen extends StatefulWidget {
   const UserProfileScreen({super.key, required this.title});
@@ -30,12 +33,67 @@ class _UserProfileScreen extends State<UserProfileScreen> {
     _loadUserInfo();
   }
 
+  Future<void> _logout() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove('user_role');
+    await FirebaseAuth.instance.signOut();
+    if (!mounted) return;
+    Navigator.pushAndRemoveUntil(
+      context,
+      MaterialPageRoute(builder: (context) => const LoginScreen()),
+          (route) => false, // Remove all previous routes
+    );
+  }
+
   Future<void> _save() async {
     if (_formKey.currentState!.validate()) {
-      String email = _emailController.text;
+      String email = _emailController.text.trim();
       String password = _passwordController.text;
+
+      try {
+        final user = FirebaseAuth.instance.currentUser;
+
+        if (user != null) {
+
+          // Now update email and/or password
+          await user.updateEmail(email);
+          await user.updatePassword(password);
+
+
+          // Update Firebase Realtime Database
+          final DatabaseReference userRef = FirebaseDatabase.instance
+              .ref()
+              .child('users')
+              .child(user.uid);
+
+          await userRef.update({
+            'email': email,
+          });
+
+          if (!mounted) return;
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('User info updated successfully')),
+          );
+
+          _logout();
+        }
+      } on FirebaseAuthException catch (e) {
+        debugPrint('FirebaseAuthException: ${e.message}');
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Auth error: ${e.message}')),
+        );
+      } catch (e) {
+        debugPrint('Error: $e');
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error updating user: $e')),
+        );
+      }
     }
   }
+
+
 
 
   Future<void> _loadUserInfo() async {
@@ -82,8 +140,9 @@ class _UserProfileScreen extends State<UserProfileScreen> {
         title: Text(widget.title),
       ),
       body: Center(
-        child: Form(child:
-        Column(
+        child: Form(
+          key: _formKey,
+          child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: <Widget>[
@@ -143,7 +202,7 @@ class _UserProfileScreen extends State<UserProfileScreen> {
               ),
               validator: (value) {
                 if (value == null || value.isEmpty) {
-                  return 'Please enter your password';
+                  return null;
                 } else if (value.length < 6) {
                   return 'Password must be at least 6 characters long';
                 }
