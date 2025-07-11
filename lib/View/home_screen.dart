@@ -1,4 +1,5 @@
 import 'package:expense_tracker/View/participant_screen.dart';
+import 'package:expense_tracker/View/user_profile.dart';
 import 'package:expense_tracker/View/volunteer_screen.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -66,6 +67,10 @@ class _HomeScreen extends State<HomeScreen> {
               leading: const Icon(Icons.person),
               title: const Text('Profile'),
               onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const UserProfileScreen(title: 'User Info'))
+                );
               },
             ),
             ListTile(
